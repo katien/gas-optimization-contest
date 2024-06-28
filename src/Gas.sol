@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 // forge test --gas-report --optimizer-runs 1
-// 414824
+// 412448
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
-//    mapping(address => uint256) public balances;
-//    mapping(address => uint256) public whitelist;
     mapping(address => uint256) amountsMap;
     mapping(uint8 => address) public administrators;
 
@@ -52,13 +50,12 @@ contract GasContract {
             mstore(0x0, caller())
             let mapSlot := keccak256(0x0, 0x20)
             let newValue := sub(sload(mapSlot), amt)
-            sstore(mapSlot,  newValue)
-
+            sstore(mapSlot, newValue)
 
         // balances[_recipient] += amt;
             mstore(0x0, recipient)
             mapSlot := keccak256(0x0, 0x20)
-            newValue := add( sload(keccak256(0x0, 0x20)), amt)
+            newValue := add(sload(keccak256(0x0, 0x20)), amt)
             sstore(mapSlot, newValue)
         }
     }
@@ -68,13 +65,11 @@ contract GasContract {
         require(tier < 255 && msg.sender == 0x0000000000000000000000000000000000001234);
         assembly {
 //            if or(lt(tier, 255), not(eq(caller(), 0x0000000000000000000000000000000000001234))) {revert(0, 0)}
-        // whitelist[addr] = 4 & tier;
+        // whitelist[addr] = 3 & tier;
             mstore(0x0, addr)
-            mstore(0x20, whitelist.slot)
-            let whitelistSlot := keccak256(0x0, 0x40)
-            let whitelistValue := sload(whitelistSlot)
-            let newValue := and(3, tier)
-            sstore(whitelistSlot, newValue)
+            sstore(add(keccak256(0x0, 0x20), 0x40), and(3, tier))
+
+
         }
         emit AddedToWhitelist(addr, tier);
     }
@@ -84,10 +79,7 @@ contract GasContract {
         assembly {
         // uint256 diff = _amount - whitelist[msg.sender];
             mstore(0x0, caller())
-            mstore(0x20, whitelist.slot)
-            let whitelistSlot := keccak256(0x0, 0x40)
-            let whitelistValue := sload(whitelistSlot)
-            let diff := sub(amount, whitelistValue)
+            let diff := sub(amount, sload(add(keccak256(0x0, 0x20), 0x40)))
 
         // balances[recipient] += diff;
             mstore(0x0, recipient)
@@ -125,7 +117,6 @@ contract GasContract {
         return (true, val);
     }
 
-
     // mapping(address => uint256) public balances;
     function balances(address addr) public view returns (uint256 val) {
         assembly {
@@ -133,8 +124,18 @@ contract GasContract {
             val := sload(keccak256(0x0, 0x20))
         }
     }
-    mapping(address => uint256) public whitelist;
+//    mapping(address => uint256) public whitelist;
+    function whitelist(address addr) public view returns (uint256 val) {
+        assembly {
+            mstore(0x0, addr)
+            val := sload(add(keccak256(0x0, 0x20), 0x40))
+        }
+    }
 }
+
+// store all user data in a mapping with no name
+// key is keccak256(useraddress)
+// value is (uint256 balance, uint256 whitelist amount, uint256 tier)
 
 // user balance
 // mstore(0x0, _user)
