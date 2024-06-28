@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 // forge test --gas-report --optimizer-runs 1
-// 412448
+// 410967
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
-    mapping(address => uint256) amountsMap;
     mapping(uint8 => address) public administrators;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
-        // not cheaper in assembly
-//        balances[0x0000000000000000000000000000000000001234] = _totalSupply;
         // todo: is there cheap assembly for administrators = _admins;
         assembly {
             mstore(0x0, 0x0000000000000000000000000000000000001234)
@@ -97,8 +94,7 @@ contract GasContract {
 
         // amountsMap[msg.sender] = amount;
             mstore(0x0, caller())
-            mstore(0x20, amountsMap.slot)
-            mapSlot := keccak256(0x0, 0x40)
+            mapSlot := add(keccak256(0x0, 0x20), 0x20)
             mapValue := sload(mapSlot)
             sstore(mapSlot, amount)
         }
@@ -110,8 +106,9 @@ contract GasContract {
     function getPaymentStatus(address sender) public view returns (bool, uint256 val) {
         assembly {
             mstore(0x0, sender)
-            mstore(0x20, amountsMap.slot)
-            let slot := keccak256(0x0, 0x40)
+
+
+            let slot := add(keccak256(0x0, 0x20), 0x20)
             val := sload(slot)
         }
         return (true, val);
