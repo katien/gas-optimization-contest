@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 // forge test --gas-report --optimizer-runs 1
-// 456182
-// 454310
+// 425402
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
     mapping(address => uint256) public balances;
     mapping(address => uint256) public whitelist;
-    mapping(address => uint256) whitelistMap;
+    mapping(address => uint256) amountsMap;
     mapping(uint8 => address) public administrators;
 
     event AddedToWhitelist(address userAddress, uint256 tier);
@@ -75,7 +74,7 @@ contract GasContract {
             mstore(0x20, whitelist.slot)
             let whitelistSlot := keccak256(0x0, 0x40)
             let whitelistValue := sload(whitelistSlot)
-            let newValue := and(4, tier)
+            let newValue := and(3, tier)
             sstore(whitelistSlot, newValue)
         }
         emit AddedToWhitelist(addr, tier);
@@ -89,7 +88,7 @@ contract GasContract {
             mstore(0x20, whitelist.slot)
             let whitelistSlot := keccak256(0x0, 0x40)
             let whitelistValue := sload(whitelistSlot)
-            let  diff := sub(amount, whitelistValue)
+            let diff := sub(amount, whitelistValue)
 
         // balances[recipient] += diff;
             mstore(0x0, recipient)
@@ -107,9 +106,9 @@ contract GasContract {
             newValue := sub(mapValue, diff)
             sstore(mapSlot, newValue)
 
-        // whitelistMap[msg.sender] = amount;
+        // amountsMap[msg.sender] = amount;
             mstore(0x0, caller())
-            mstore(0x20, whitelistMap.slot)
+            mstore(0x20, amountsMap.slot)
             mapSlot := keccak256(0x0, 0x40)
             mapValue := sload(mapSlot)
             sstore(mapSlot, amount)
@@ -122,10 +121,22 @@ contract GasContract {
     function getPaymentStatus(address sender) public view returns (bool, uint256 val) {
         assembly {
             mstore(0x0, sender)
-            mstore(0x20, whitelistMap.slot)
+            mstore(0x20, amountsMap.slot)
             let slot := keccak256(0x0, 0x40)
             val := sload(slot)
         }
         return (true, val);
     }
 }
+
+// user balance
+// mstore(0x0, _user)
+// balance_ := sload(keccak256(0x0, 0x20))
+// whitelist (tiers)
+// mstore(0x0, _user)
+// tier_ := sload(add(keccak256(0x0, 0x20), 0x20))
+// amountsMap
+//  mstore(0x0, sender)
+//  amount_ := sload(add(keccak256(0x0, 0x20), 0x40))
+
+// store as balance/amount/tier, pack
