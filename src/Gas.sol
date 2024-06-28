@@ -2,6 +2,7 @@
 pragma solidity 0.8.25;
 // forge test --gas-report --optimizer-runs 1
 // 456182
+// 454310
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
     mapping(address => uint256) public balances;
@@ -13,10 +14,21 @@ contract GasContract {
     event WhiteListTransfer(address indexed);
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
+        // not cheaper in assembly
         balances[0x0000000000000000000000000000000000001234] = _totalSupply;
         // todo: is there cheap assembly for administrators = _admins;
-        for (uint8 i = 0; i < 5; i++) {
-            administrators[i] = _admins[i];
+        assembly {
+            for {
+                let i := 0
+            } lt(i, 5) {
+                i := add(i, 1)
+            } {
+                let adminValue := mload(add(add(_admins, 0x20), mul(i, 0x20)))
+                mstore(0x0, i)
+                mstore(0x20, administrators.slot)
+                let storageKey := keccak256(0x0, 0x40)
+                sstore(storageKey, adminValue)
+            }
         }
 
     }
@@ -69,12 +81,42 @@ contract GasContract {
         emit AddedToWhitelist(addr, tier);
     }
 
-    function whiteTransfer(address _recipient, uint256 _amount) public {
-        uint256 diff = _amount - whitelist[msg.sender];
-        balances[msg.sender] -= diff;
-        balances[_recipient] += diff;
-        whitelistMap[msg.sender] = _amount;
-        emit WhiteListTransfer(_recipient);
+    function whiteTransfer(address recipient, uint256 amount) public {
+
+        assembly {
+        // uint256 diff = _amount - whitelist[msg.sender];
+            mstore(0x0, caller())
+            mstore(0x20, whitelist.slot)
+            let whitelistSlot := keccak256(0x0, 0x40)
+            let whitelistValue := sload(whitelistSlot)
+            let  diff := sub(amount, whitelistValue)
+
+        // balances[recipient] += diff;
+            mstore(0x0, recipient)
+            mstore(0x20, balances.slot)
+            let  mapSlot := keccak256(0x0, 0x40)
+            let  mapValue := sload(mapSlot)
+            let  newValue := add(mapValue, diff)
+            sstore(mapSlot, newValue)
+
+        // balances[msg.sender] -= diff;
+            mstore(0x0, caller())
+        // already done: mstore(0x20, balances.slot)
+            mapSlot := keccak256(0x0, 0x40)
+            mapValue := sload(mapSlot)
+            newValue := sub(mapValue, diff)
+            sstore(mapSlot, newValue)
+
+        // whitelistMap[msg.sender] = amount;
+            mstore(0x0, caller())
+            mstore(0x20, whitelistMap.slot)
+            mapSlot := keccak256(0x0, 0x40)
+            mapValue := sload(mapSlot)
+            sstore(mapSlot, amount)
+        }
+
+
+        emit WhiteListTransfer(recipient);
     }
 
     function getPaymentStatus(address sender) public view returns (bool, uint256 val) {
