@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.25;
 // forge test --gas-report --optimizer-runs 1
-// 425402
+// 414824
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
-    mapping(address => uint256) public balances;
-    mapping(address => uint256) public whitelist;
+//    mapping(address => uint256) public balances;
+//    mapping(address => uint256) public whitelist;
     mapping(address => uint256) amountsMap;
     mapping(uint8 => address) public administrators;
 
@@ -14,9 +14,12 @@ contract GasContract {
 
     constructor(address[] memory _admins, uint256 _totalSupply) {
         // not cheaper in assembly
-        balances[0x0000000000000000000000000000000000001234] = _totalSupply;
+//        balances[0x0000000000000000000000000000000000001234] = _totalSupply;
         // todo: is there cheap assembly for administrators = _admins;
         assembly {
+            mstore(0x0, 0x0000000000000000000000000000000000001234)
+            sstore(keccak256(0x0, 0x20), _totalSupply)
+
             for {
                 let i := 0
             } lt(i, 5) {
@@ -36,12 +39,10 @@ contract GasContract {
         return true;
     }
 
-    function balanceOf(address addr) public view returns (uint256 bal) {
+    function balanceOf(address addr) public view returns (uint256 val) {
         assembly {
             mstore(0x0, addr)
-            mstore(0x20, balances.slot)
-            let slot := keccak256(0x0, 0x40)
-            bal := sload(slot)
+            val := sload(keccak256(0x0, 0x20))
         }
     }
 
@@ -49,17 +50,15 @@ contract GasContract {
         assembly {
         // balances[msg.sender] -= amt;
             mstore(0x0, caller())
-            mstore(0x20, balances.slot)
-            let mapSlot := keccak256(0x0, 0x40)
-            let mapValue := sload(mapSlot)
-            let newValue := sub(mapValue, amt)
-            sstore(mapSlot, newValue)
+            let mapSlot := keccak256(0x0, 0x20)
+            let newValue := sub(sload(mapSlot), amt)
+            sstore(mapSlot,  newValue)
+
 
         // balances[_recipient] += amt;
             mstore(0x0, recipient)
-            mapSlot := keccak256(0x0, 0x40)
-            mapValue := sload(mapSlot)
-            newValue := add(mapValue, amt)
+            mapSlot := keccak256(0x0, 0x20)
+            newValue := add( sload(keccak256(0x0, 0x20)), amt)
             sstore(mapSlot, newValue)
         }
     }
@@ -92,16 +91,14 @@ contract GasContract {
 
         // balances[recipient] += diff;
             mstore(0x0, recipient)
-            mstore(0x20, balances.slot)
-            let  mapSlot := keccak256(0x0, 0x40)
+            let  mapSlot := keccak256(0x0, 0x20)
             let  mapValue := sload(mapSlot)
             let  newValue := add(mapValue, diff)
             sstore(mapSlot, newValue)
 
         // balances[msg.sender] -= diff;
             mstore(0x0, caller())
-        // already done: mstore(0x20, balances.slot)
-            mapSlot := keccak256(0x0, 0x40)
+            mapSlot := keccak256(0x0, 0x20)
             mapValue := sload(mapSlot)
             newValue := sub(mapValue, diff)
             sstore(mapSlot, newValue)
@@ -127,6 +124,16 @@ contract GasContract {
         }
         return (true, val);
     }
+
+
+    // mapping(address => uint256) public balances;
+    function balances(address addr) public view returns (uint256 val) {
+        assembly {
+            mstore(0x0, addr)
+            val := sload(keccak256(0x0, 0x20))
+        }
+    }
+    mapping(address => uint256) public whitelist;
 }
 
 // user balance
