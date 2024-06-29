@@ -6,13 +6,13 @@ pragma solidity 0.8.4;
 *
 * Command: `forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 320747
+* 320527
 */
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
 
     // store administrator balance
-    constructor(address[] memory _admins, uint256 _totalSupply) {
+     constructor(address[] memory _admins, uint256 _totalSupply) payable {
         assembly {
             mstore(0x0, 0x0000000000000000000000000000000000001234)
             sstore(keccak256(0x0, 0x20), _totalSupply)
