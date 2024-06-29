@@ -6,7 +6,7 @@ pragma solidity 0.8.4;
 *
 * Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 304666
+* 298192
 */
 contract GasContract {
 
@@ -16,15 +16,24 @@ contract GasContract {
             sstore(0x1234, totalSupply)
         }
     }
-    // get hardcoded administrators
+    // return hardcoded admins
     function administrators(uint8 index) external view returns (address admin) {
         assembly {
-            switch index
-            case 0 {admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2}
-            case 1 {admin := 0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46}
-            case 2 {admin := 0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf}
-            case 3 {admin := 0xeadb3d065f8d15cc05e92594523516aD36d1c834}
-            case 4 {admin := 0x1234}
+            if eq(index, 0) {
+                admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2
+            }
+            if eq(index, 1) {
+                admin := 0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46
+            }
+            if eq(index, 2) {
+                admin := 0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf
+            }
+            if eq(index, 3) {
+                admin := 0xeadb3d065f8d15cc05e92594523516aD36d1c834
+            }
+            if eq(index, 4) {
+                admin := 0x1234
+            }
         }
     }
 
