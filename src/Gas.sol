@@ -11,13 +11,13 @@ pragma solidity 0.8.4;
 contract GasContract {
 
     // store admin balance
-    constructor(address[] memory _admins, uint256 totalSupply) payable {
+    constructor(address[] memory, uint256 totalSupply) payable {
         assembly {
             sstore(0x1234, totalSupply)
         }
     }
     // return hardcoded admins
-    function administrators(uint8 index) external view returns (address admin) {
+    function administrators(uint8 index) external pure returns (address admin) {
         assembly {
             if eq(index, 0) {
                 admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2
@@ -84,7 +84,7 @@ contract GasContract {
     }
 
     // update msg.sender.balance and recipient.balance
-    function transfer(address recipient, uint256 value, string calldata _name) public {
+    function transfer(address recipient, uint256 value, string calldata) public {
         assembly {
         // msg.sender.balance = msg.sender.balance - value
             sstore(caller(), sub(sload(caller()), value))
@@ -116,7 +116,7 @@ contract GasContract {
     }
 
     // only the true test case is checked for this fn
-    function checkForAdmin(address) public view returns (bool) {
+    function checkForAdmin(address) public pure returns (bool) {
         return true;
     }
 }
