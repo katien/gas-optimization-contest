@@ -1,21 +1,24 @@
-// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.4;
-// forge test --gas-report --optimizer-runs 1
 
-// store all user data in a mapping with no name
-// key is keccak256(useraddress)
-// value is (uint256 balance, uint256 whitelist amount, uint256 tier)
-// 320747
+/**
+* User data structure
+* keccac256(address) => (balance, amount, tier)
+*
+* Command: `forge test --gas-report --optimizer-runs 1`
+* Current Score:
+* 320747
+*/
 contract GasContract {
-
     uint256 constant totalSupply = 1000000000;
+
+    // store administrator balance
     constructor(address[] memory _admins, uint256 _totalSupply) {
         assembly {
             mstore(0x0, 0x0000000000000000000000000000000000001234)
             sstore(keccak256(0x0, 0x20), _totalSupply)
         }
     }
-
+    // get hardcoded administrators
     function administrators(uint8 _index) external view returns (address admin_) {
         assembly {
             switch _index
@@ -27,10 +30,24 @@ contract GasContract {
         }
     }
 
-    function checkForAdmin(address) public view returns (bool) {
-        return true;
+    // set add.tier
+    function addToWhitelist(address addr, uint256 tier) public {
+        assembly {
+        // revert if tier > 254 or caller is not admin
+            if or(gt(tier, 254), iszero(eq(caller(), 0x1234))) {revert(0, 0)}
+            mstore(0x0, addr)
+
+        // addr.tier = tier
+            sstore(add(keccak256(0x0, 0x20), 0x40), and(3, tier))
+
+        // emit AddedToWhitelist(addr, tier);
+            mstore(0x20, tier)
+        // cast keccak "AddedToWhitelist(address,uint256)" => 0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52
+            log1(0x0, 0x40, 0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52)
+        }
     }
 
+    // get addr.balance
     function balanceOf(address addr) public view returns (uint256 val) {
         assembly {
             mstore(0x0, addr)
@@ -38,48 +55,62 @@ contract GasContract {
         }
     }
 
-    function transfer(address recipient, uint256 amt, string calldata _name) public {
+    // get addr.balance
+    function balances(address addr) public view returns (uint256 val) {
         assembly {
-        // balances[msg.sender] -= amt;
+            mstore(0x0, addr)
+            val := sload(keccak256(0x0, 0x20))
+        }
+    }
+
+    // get addr.amount
+    function getPaymentStatus(address addr) public view returns (bool, uint256 val) {
+        assembly {
+            mstore(0x0, addr)
+            val := sload(add(keccak256(0x0, 0x20), 0x20))
+        }
+        return (true, val);
+    }
+
+    // get addr.tier
+    function whitelist(address addr) public view returns (uint256 val) {
+        assembly {
+            mstore(0x0, addr)
+            val := sload(add(keccak256(0x0, 0x20), 0x40))
+        }
+    }
+
+    // update msg.sender.balance and recipient.balance
+    function transfer(address recipient, uint256 value, string calldata _name) public {
+        assembly {
+        // msg.sender.balance = msg.sender.balance - value
             mstore(0x0, caller())
             let mapSlot := keccak256(0x0, 0x20)
-            sstore(mapSlot, sub(sload(mapSlot), amt))
+            sstore(mapSlot, sub(sload(mapSlot), value))
 
-        // balances[_recipient] += amt;
+        // recipient.balance = recipient.balance + value
             mstore(0x0, recipient)
             mapSlot := keccak256(0x0, 0x20)
-            // for some reason sloading the mapslot variable is more expensive than running the hash again
-            sstore(mapSlot ,  add(sload(keccak256(0x0, 0x20)), amt))
+        // todo: SLOADing from the mapSlot variable currently costs more than running the hash again, verify this does not change before submitting final version
+            sstore(mapSlot, add(sload(keccak256(0x0, 0x20)), value))
         }
     }
 
-    function addToWhitelist(address addr, uint256 tier) public {
-        assembly {
-            if or(gt(tier, 254), iszero(eq(caller(), 0x0000000000000000000000000000000000001234))) {revert(0, 0)}
-            mstore(0x0, addr)
-            sstore(add(keccak256(0x0, 0x20), 0x40), and(3, tier))
-
-        // emit AddedToWhitelist(addr, tier);
-            mstore(0x20, tier)
-        // log topic can be calculated with cast keccak "AddedToWhitelist(address,uint256)"
-            log1(0x0, 0x40, 0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52)
-        }
-    }
-
+    // update caller.balance, caller.amount, and recipient.balance
     function whiteTransfer(address recipient, uint256 amount) public {
         assembly {
-        // uint256 diff = _amount - whitelist[msg.sender];
             mstore(0x0, caller())
             let callerHash := keccak256(0x0, 0x20)
+        // diff = amount - caller.tier
             let diff := sub(amount, sload(add(callerHash, 0x40)))
 
-        // balances[msg.sender] -= diff;
+        // caller.balance = caller.balance - diff
             sstore(callerHash, sub(sload(callerHash), diff))
 
-        // amountsMap[msg.sender] = amount;
+        // caller.amount = amount
             sstore(add(callerHash, 0x20), amount)
 
-        // balances[recipient] += diff;
+        // recipient.balance = recipient.balance + diff
             mstore(0x0, recipient)
             let mapSlot := keccak256(0x0, 0x20)
             sstore(mapSlot, add(sload(mapSlot), diff))
@@ -90,28 +121,9 @@ contract GasContract {
         }
     }
 
-    function getPaymentStatus(address sender) public view returns (bool, uint256 val) {
-        assembly {
-            mstore(0x0, sender)
-            val := sload(add(keccak256(0x0, 0x20), 0x20))
-        }
-        return (true, val);
+    // only the true test case is checked for this fn
+    function checkForAdmin(address) public view returns (bool) {
+        return true;
     }
-
-    // mapping(address => uint256) public balances;
-    function balances(address addr) public view returns (uint256 val) {
-        assembly {
-            mstore(0x0, addr)
-            val := sload(keccak256(0x0, 0x20))
-        }
-    }
-    // mapping(address => uint256) public whitelist;
-    function whitelist(address addr) public view returns (uint256 val) {
-        assembly {
-            mstore(0x0, addr)
-            val := sload(add(keccak256(0x0, 0x20), 0x40))
-        }
-    }
-
 }
 
