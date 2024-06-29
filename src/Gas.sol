@@ -4,28 +4,27 @@ pragma solidity 0.8.4;
 * User data structure
 * (address) => (balance, amount, tier)
 *
-* Command: `forge test --gas-report --optimizer-runs 1`
+* Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 304678
+* 304666
 */
 contract GasContract {
-    uint256 constant totalSupply = 1000000000;
 
-    // store administrator balance
-    constructor(address[] memory _admins, uint256 _totalSupply) payable {
+    // store admin balance
+    constructor(address[] memory _admins, uint256 totalSupply) payable {
         assembly {
-            sstore(0x1234, _totalSupply)
+            sstore(0x1234, totalSupply)
         }
     }
     // get hardcoded administrators
-    function administrators(uint8 _index) external view returns (address _admin) {
+    function administrators(uint8 index) external view returns (address admin) {
         assembly {
-            switch _index
-            case 0 {_admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2}
-            case 1 {_admin := 0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46}
-            case 2 {_admin := 0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf}
-            case 3 {_admin := 0xeadb3d065f8d15cc05e92594523516aD36d1c834}
-            case 4 {_admin := 0x1234}
+            switch index
+            case 0 {admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2}
+            case 1 {admin := 0x2b263f55Bf2125159Ce8Ec2Bb575C649f822ab46}
+            case 2 {admin := 0x0eD94Bc8435F3189966a49Ca1358a55d871FC3Bf}
+            case 3 {admin := 0xeadb3d065f8d15cc05e92594523516aD36d1c834}
+            case 4 {admin := 0x1234}
         }
     }
 
@@ -79,14 +78,10 @@ contract GasContract {
     function transfer(address recipient, uint256 value, string calldata _name) public {
         assembly {
         // msg.sender.balance = msg.sender.balance - value
-            let mapSlot := caller()
-            sstore(mapSlot, sub(sload(mapSlot), value))
+            sstore(caller(), sub(sload(caller()), value))
 
         // recipient.balance = recipient.balance + value
-
-            mapSlot := recipient
-        // todo: SLOADing from the mapSlot variable currently costs more than running the hash again, verify this does not change before submitting final version
-            sstore(mapSlot, add(sload(mapSlot), value))
+            sstore(recipient, add(sload(recipient), value))
         }
     }
 
