@@ -6,16 +6,15 @@ pragma solidity 0.8.4;
 *
 * Command: `forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 320527
+* 305758
 */
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
 
     // store administrator balance
-     constructor(address[] memory _admins, uint256 _totalSupply) payable {
+    constructor(address[] memory _admins, uint256 _totalSupply) payable {
         assembly {
-            mstore(0x0, 0x0000000000000000000000000000000000001234)
-            sstore(keccak256(0x0, 0x20), _totalSupply)
+            sstore(0x0000000000000000000000000000000000001234, _totalSupply)
         }
     }
     // get hardcoded administrators
@@ -35,12 +34,12 @@ contract GasContract {
         assembly {
         // revert if tier > 254 or caller is not admin
             if or(gt(tier, 254), iszero(eq(caller(), 0x1234))) {revert(0, 0)}
-            mstore(0x0, addr)
 
         // addr.tier = tier
-            sstore(add(keccak256(0x0, 0x20), 0x40), and(3, tier))
+            sstore(add(addr, 0x40), and(3, tier))
 
         // emit AddedToWhitelist(addr, tier);
+            mstore(0x0, addr)
             mstore(0x20, tier)
         // cast keccak "AddedToWhitelist(address,uint256)" => 0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52
             log1(0x0, 0x40, 0x62c1e066774519db9fe35767c15fc33df2f016675b7cc0c330ed185f286a2d52)
@@ -50,24 +49,21 @@ contract GasContract {
     // get addr.balance
     function balanceOf(address addr) public view returns (uint256 val) {
         assembly {
-            mstore(0x0, addr)
-            val := sload(keccak256(0x0, 0x20))
+            val := sload(addr)
         }
     }
 
     // get addr.balance
     function balances(address addr) public view returns (uint256 val) {
         assembly {
-            mstore(0x0, addr)
-            val := sload(keccak256(0x0, 0x20))
+            val := sload(addr)
         }
     }
 
     // get addr.amount
     function getPaymentStatus(address addr) public view returns (bool, uint256 val) {
         assembly {
-            mstore(0x0, addr)
-            val := sload(add(keccak256(0x0, 0x20), 0x20))
+            val := sload(add(addr, 0x20))
         }
         return (true, val);
     }
@@ -75,8 +71,7 @@ contract GasContract {
     // get addr.tier
     function whitelist(address addr) public view returns (uint256 val) {
         assembly {
-            mstore(0x0, addr)
-            val := sload(add(keccak256(0x0, 0x20), 0x40))
+            val := sload(add(addr, 0x40))
         }
     }
 
@@ -84,23 +79,21 @@ contract GasContract {
     function transfer(address recipient, uint256 value, string calldata _name) public {
         assembly {
         // msg.sender.balance = msg.sender.balance - value
-            mstore(0x0, caller())
-            let mapSlot := keccak256(0x0, 0x20)
+            let mapSlot := caller()
             sstore(mapSlot, sub(sload(mapSlot), value))
 
         // recipient.balance = recipient.balance + value
-            mstore(0x0, recipient)
-            mapSlot := keccak256(0x0, 0x20)
+
+            mapSlot := recipient
         // todo: SLOADing from the mapSlot variable currently costs more than running the hash again, verify this does not change before submitting final version
-            sstore(mapSlot, add(sload(keccak256(0x0, 0x20)), value))
+            sstore(mapSlot, add(sload(mapSlot), value))
         }
     }
 
     // update caller.balance, caller.amount, and recipient.balance
     function whiteTransfer(address recipient, uint256 amount) public {
         assembly {
-            mstore(0x0, caller())
-            let callerHash := keccak256(0x0, 0x20)
+            let callerHash := caller()
         // diff = amount - caller.tier
             let diff := sub(amount, sload(add(callerHash, 0x40)))
 
@@ -111,8 +104,7 @@ contract GasContract {
             sstore(add(callerHash, 0x20), amount)
 
         // recipient.balance = recipient.balance + diff
-            mstore(0x0, recipient)
-            let mapSlot := keccak256(0x0, 0x20)
+            let mapSlot := recipient
             sstore(mapSlot, add(sload(mapSlot), diff))
 
         // emit WhiteListTransfer(recipient);
