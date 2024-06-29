@@ -2,11 +2,11 @@ pragma solidity 0.8.4;
 
 /**
 * User data structure
-* keccac256(address) => (balance, amount, tier)
+* (address) => (balance, amount, tier)
 *
 * Command: `forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 305758
+* 304438
 */
 contract GasContract {
     uint256 constant totalSupply = 1000000000;
@@ -83,29 +83,26 @@ contract GasContract {
             sstore(mapSlot, sub(sload(mapSlot), value))
 
         // recipient.balance = recipient.balance + value
-
             mapSlot := recipient
         // todo: SLOADing from the mapSlot variable currently costs more than running the hash again, verify this does not change before submitting final version
-            sstore(mapSlot, add(sload(mapSlot), value))
+            sstore(mapSlot, add(mapSlot, value))
         }
     }
 
     // update caller.balance, caller.amount, and recipient.balance
     function whiteTransfer(address recipient, uint256 amount) public {
         assembly {
-            let callerHash := caller()
         // diff = amount - caller.tier
-            let diff := sub(amount, sload(add(callerHash, 0x40)))
+            let diff := sub(amount, sload(add(caller(), 0x40)))
 
         // caller.balance = caller.balance - diff
-            sstore(callerHash, sub(sload(callerHash), diff))
+            sstore(caller(), sub(sload(caller()), diff))
 
         // caller.amount = amount
-            sstore(add(callerHash, 0x20), amount)
+            sstore(add(caller(), 0x20), amount)
 
         // recipient.balance = recipient.balance + diff
-            let mapSlot := recipient
-            sstore(mapSlot, add(sload(mapSlot), diff))
+            sstore(recipient, add(sload(recipient), diff))
 
         // emit WhiteListTransfer(recipient);
         // cast keccak "WhiteListTransfer(address)"
