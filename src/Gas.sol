@@ -61,7 +61,7 @@ contract GasContract {
         return (true, val);
     }
 
-    function whitelist(address addr) public returns (uint256 val) {
+    function whitelist(address) public returns (uint256) {
     }
 
     // update msg.sender.balance and recipient.balance

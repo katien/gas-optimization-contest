@@ -72,7 +72,6 @@ contract GasImpl {
 
     // update msg.sender.balance and recipient.balance
     function transfer(address recipient, uint256 value, string calldata) public {
-        // todo: this is currently causing each transfer to boost both sender and recipient balances by 1000000000
         assembly {
         // msg.sender.balance = msg.sender.balance - value
             sstore(caller(), sub(sload(caller()), value))
