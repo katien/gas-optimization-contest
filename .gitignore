@@ -22,3 +22,8 @@ docs/
 .github/workflows 
 
 *lcov.info
+
+.DS_Store
+.idea/
+
+

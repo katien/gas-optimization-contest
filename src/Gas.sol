@@ -2,11 +2,11 @@ pragma solidity 0.8.4;
 
 /**
 * User data structure
-* (address) => (balance, amount, tier)
+* (address) => (balance, amount)
 *
 * Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 289539
+* 289323
 */
 contract GasContract {
 
@@ -32,7 +32,7 @@ contract GasContract {
     function addToWhitelist(address addr, uint256 tier) public {
         assembly {
         // revert if tier > 254 or caller is not admin
-            if or(gt(tier, 254), iszero(eq(caller(), 0x1234))) {revert(0, 0)}
+            if or(gt(tier, 254), xor(caller(), 0x1234)) {revert(0, 0)}
 
         // emit AddedToWhitelist(addr, tier);
             mstore(0x0, addr)
