@@ -18,7 +18,7 @@ contract GasContract {
     }
 
     // return hardcoded admins
-    function administrators(uint256 index) external view returns (address admin) {
+    function administrators(uint256 index) external returns (address admin) {
         assembly {
             admin := 0x1234
             if eq(index, 0) {admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2}
@@ -43,28 +43,28 @@ contract GasContract {
     }
 
     // get addr.balance
-    function balanceOf(address addr) public view returns (uint256 val) {
+    function balanceOf(address addr) public returns (uint256 val) {
         assembly {
             val := sload(addr)
         }
     }
 
     // get addr.balance
-    function balances(address addr) public view returns (uint256 val) {
+    function balances(address addr) public returns (uint256 val) {
         assembly {
             val := sload(addr)
         }
     }
 
     // get addr.amount
-    function getPaymentStatus(address addr) public view returns (bool, uint256 val) {
+    function getPaymentStatus(address addr) public returns (bool, uint256 val) {
         assembly {
             val := sload(add(addr, 0x20))
         }
         return (true, val);
     }
 
-    function whitelist(address addr) public view returns (uint256 val) {
+    function whitelist(address addr) public returns (uint256 val) {
     }
 
     // update msg.sender.balance and recipient.balance
@@ -97,7 +97,7 @@ contract GasContract {
     }
 
     // only the true test case is checked for this fn
-    function checkForAdmin(address) public view returns (bool) {
+    function checkForAdmin(address) public returns (bool) {
         return true;
     }
 }
