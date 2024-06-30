@@ -4,11 +4,14 @@ pragma solidity 0.8.4;
 * User data structure
 * (address) => (balance, amount)
 *
-* Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
-* Current Score:
-* 289323
+* Implementation contract for delegatecall strategy
+* test by running
+* anvil
+* ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 forge create GasImpl --unlocked --constructor-args "[]" "1000000000"
+* copy deployment address into GasContract
+* rm -rf cache;forge test --fork-url 127.0.0.1:8545 --gas-report --optimizer-runs 1
 */
-contract _GasContract {
+contract GasImpl {
 
     // store admin balance
     constructor(address[] memory _admins, uint256 totalSupply) payable {
@@ -45,14 +48,14 @@ contract _GasContract {
     // get addr.balance
     function balanceOf(address addr) public returns (uint256 val) {
         assembly {
-            val := sload(addr)
+            val := add(sload(addr), 1000000000)
         }
     }
 
     // get addr.balance
     function balances(address addr) public returns (uint256 val) {
         assembly {
-            val := sload(addr)
+            val := add(sload(addr), 1000000000)
         }
     }
 
@@ -69,6 +72,7 @@ contract _GasContract {
 
     // update msg.sender.balance and recipient.balance
     function transfer(address recipient, uint256 value, string calldata) public {
+        // todo: this is currently causing each transfer to boost both sender and recipient balances by 1000000000
         assembly {
         // msg.sender.balance = msg.sender.balance - value
             sstore(caller(), sub(sload(caller()), value))
