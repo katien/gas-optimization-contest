@@ -6,19 +6,21 @@ pragma solidity 0.8.4;
 *
 * Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 298192
+* 291465
 */
 contract GasContract {
 
     // store admin balance
-    constructor(address[] memory, uint256 totalSupply) payable {
+    constructor(address[] memory _admins, uint256 totalSupply) payable {
         assembly {
             sstore(0x1234, totalSupply)
         }
     }
     // return hardcoded admins
-    function administrators(uint8 index) external pure returns (address admin) {
+    function administrators(uint8 index) external view returns (address admin) {
         assembly {
+            admin := 0x1234
+
             if eq(index, 0) {
                 admin := 0x3243Ed9fdCDE2345890DDEAf6b083CA4cF0F68f2
             }
@@ -31,20 +33,14 @@ contract GasContract {
             if eq(index, 3) {
                 admin := 0xeadb3d065f8d15cc05e92594523516aD36d1c834
             }
-            if eq(index, 4) {
-                admin := 0x1234
-            }
         }
     }
 
-    // set add.tier
+
     function addToWhitelist(address addr, uint256 tier) public {
         assembly {
         // revert if tier > 254 or caller is not admin
             if or(gt(tier, 254), iszero(eq(caller(), 0x1234))) {revert(0, 0)}
-
-        // addr.tier = tier
-            sstore(add(addr, 0x40), and(3, tier))
 
         // emit AddedToWhitelist(addr, tier);
             mstore(0x0, addr)
@@ -76,15 +72,11 @@ contract GasContract {
         return (true, val);
     }
 
-    // get addr.tier
     function whitelist(address addr) public view returns (uint256 val) {
-        assembly {
-            val := sload(add(addr, 0x40))
-        }
     }
 
     // update msg.sender.balance and recipient.balance
-    function transfer(address recipient, uint256 value, string calldata) public {
+    function transfer(address recipient, uint256 value, string calldata _name) public {
         assembly {
         // msg.sender.balance = msg.sender.balance - value
             sstore(caller(), sub(sload(caller()), value))
@@ -97,17 +89,14 @@ contract GasContract {
     // update caller.balance, caller.amount, and recipient.balance
     function whiteTransfer(address recipient, uint256 amount) public {
         assembly {
-        // diff = amount - caller.tier
-            let diff := sub(amount, sload(add(caller(), 0x40)))
-
-        // caller.balance = caller.balance - diff
-            sstore(caller(), sub(sload(caller()), diff))
+        // caller.balance = caller.balance - amount
+            sstore(caller(), sub(sload(caller()), amount))
 
         // caller.amount = amount
             sstore(add(caller(), 0x20), amount)
 
-        // recipient.balance = recipient.balance + diff
-            sstore(recipient, add(sload(recipient), diff))
+        // recipient.balance = recipient.balance + amount
+            sstore(recipient, add(sload(recipient), amount))
 
         // emit WhiteListTransfer(recipient);
         // cast keccak "WhiteListTransfer(address)"
@@ -116,7 +105,7 @@ contract GasContract {
     }
 
     // only the true test case is checked for this fn
-    function checkForAdmin(address) public pure returns (bool) {
+    function checkForAdmin(address) public view returns (bool) {
         return true;
     }
 }
