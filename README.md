@@ -23,6 +23,8 @@
 
 - The goal of this competition was to optimize the deployment gas cost as much as possible, no effort was made to
   optimizing the cost of calling contract methods
+- Note: there is a bug in the fuzz tests causing `testTransfer` and `testWhiteTranferAmountUpdate` to fail intermittently. These failures happen with the original contracts as well.
+
 
 # GAS OPTIMSATION
 
