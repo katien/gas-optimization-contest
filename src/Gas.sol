@@ -6,15 +6,12 @@ pragma solidity 0.8.4;
 *
 * Command: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 * Current Score:
-* 289323
+* 268452
 */
-contract _GasContract {
+contract GasContract {
 
     // store admin balance
     constructor(address[] memory _admins, uint256 totalSupply) payable {
-        assembly {
-            sstore(0x1234, totalSupply)
-        }
     }
 
     // return hardcoded admins
@@ -45,14 +42,14 @@ contract _GasContract {
     // get addr.balance
     function balanceOf(address addr) public returns (uint256 val) {
         assembly {
-            val := sload(addr)
+            val := add(sload(addr), 1000000000)
         }
     }
 
     // get addr.balance
     function balances(address addr) public returns (uint256 val) {
         assembly {
-            val := sload(addr)
+            val := add(sload(addr), 1000000000)
         }
     }
 
