@@ -1,5 +1,5 @@
-# Group 1 Solution: 268452 gas
-### **See `proxy` branch for a version that costs 231252 gas but must be run on a fork of Sepolia**
+# Group 1 Solution: 268,452 gas
+### **See `proxy` branch for a version that costs 231,252 gas but must be run on a fork of Sepolia**
 - Run via: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
 - Output: 
 
@@ -18,6 +18,11 @@
 | whiteTransfer                    | 67407           | 67593 | 67647  | 89319 | 768     |
 | whitelist                        | 21636           | 21785 | 21864  | 21864 | 512     |
 
+- The goal of this competition was to optimize the deployment gas cost as much as possible, no effort was made to
+  optimizing the cost of calling contract methods
+- Note: there is a bug in the fuzz tests causing `testTransfer` and `testWhiteTranferAmountUpdate` to fail intermittently. These failures happen with the original contracts as well.
+
+# Original Instructions
 # GAS OPTIMSATION
 
 - Your task is to edit and optimise the Gas.sol contract.
