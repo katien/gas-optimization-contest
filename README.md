@@ -1,22 +1,28 @@
-# Group 1 Solution: 268452 gas
-### **See `proxy` branch for a version that costs 231252 gas but must be run on a fork of Sepolia**
-- Run via: `rm -rf cache;forge test --gas-report --optimizer-runs 1`
-- Output: 
+# Group 1 Proxy Solution: 231,252 gas
+
+### **See `master` branch for a version that costs 268,452 gas and does not use delegatecall**
+
+- Run via: `rm -rf cache;forge test --fork-url https://eth-sepolia.g.alchemy.com/v2/OePOEihAN0uxV-7hy5GdFT0EYEZPyESB --gas-report --optimizer-runs 1`
+- Implementation contract deployed on Sepolia at https://sepolia.etherscan.io/address/0x25ddbF63165997BA60e0aab3C61e6814BEA0144c
+- Output:
 
 | src/Gas.sol:GasContract contract |                 |       |        |       |         |
 |----------------------------------|-----------------|-------|--------|-------|---------|
 | Deployment Cost                  | Deployment Size |       |        |       |         |
-| 268452                           | 1529            |       |        |       |         |
+| 231252                           | 1357            |       |        |       |         |
 | Function Name                    | min             | avg   | median | max   | # calls |
-| addToWhitelist                   | 21678           | 22663 | 22987  | 23203 | 2048    |
-| administrators                   | 21734           | 21742 | 21746  | 21746 | 5       |
-| balanceOf                        | 23681           | 23721 | 23705  | 23921 | 1793    |
-| balances                         | 23649           | 23798 | 23877  | 23877 | 1024    |
+| addToWhitelist                   | 24639           | 25638 | 25971  | 26187 | 2048    |
+| administrators                   | 24684           | 24692 | 24696  | 24696 | 5       |
+| balanceOf                        | 26725           | 26753 | 26737  | 26953 | 1793    |
+| balances                         | 26637           | 26774 | 26865  | 26865 | 1024    |
 | checkForAdmin                    | 21687           | 21687 | 21687  | 21687 | 1       |
-| getPaymentStatus                 | 23759           | 23901 | 23987  | 23987 | 256     |
-| transfer                         | 26962           | 66272 | 66634  | 66870 | 1024    |
-| whiteTransfer                    | 67407           | 67593 | 67647  | 89319 | 768     |
-| whitelist                        | 21636           | 21785 | 21864  | 21864 | 512     |
+| getPaymentStatus                 | 26730           | 26876 | 26958  | 26958 | 256     |
+| transfer                         | 30203           | 69646 | 69859  | 70099 | 1024    |
+| whiteTransfer                    | 53390           | 70608 | 70718  | 70730 | 768     |
+| whitelist                        | 21636           | 21773 | 21864  | 21864 | 512     |
+
+- The goal of this competition was to optimize the deployment gas cost as much as possible, no effort was made to
+  optimizing the cost of calling contract methods
 
 # GAS OPTIMSATION
 
@@ -26,14 +32,15 @@
 - You can change the functionality of the contract as long as the tests pass.
 - Try to get the gas usage as low as possible.
 
-
-
 ## To run tests & gas report with verbatim trace
+
 Run: `forge test --gas-report -vvvv`
 
 ## To run tests & gas report
+
 Run: `forge test --gas-report`
 
 ## To run a specific test
+
 RUN:`forge test --match-test {TESTNAME} -vvvv`
 EG: `forge test --match-test test_onlyOwner -vvvv`
